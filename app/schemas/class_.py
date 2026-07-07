@@ -1,10 +1,14 @@
 from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel
+
+Turno = Literal["Manhã", "Tarde", "Noite"]
 
 
 class ClassCreate(BaseModel):
     name: str
     age_group: str | None = None
+    period: Turno | None = None
     schedule: str | None = None
     coach_id: str | None = None
 
@@ -12,6 +16,7 @@ class ClassCreate(BaseModel):
 class ClassUpdate(BaseModel):
     name: str | None = None
     age_group: str | None = None
+    period: Turno | None = None
     schedule: str | None = None
     coach_id: str | None = None
 
@@ -21,6 +26,7 @@ class ClassOut(BaseModel):
     school_id: str
     name: str
     age_group: str | None
+    period: str | None
     schedule: str | None
     coach_id: str | None
     student_ids: list[str]

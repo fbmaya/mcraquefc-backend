@@ -12,6 +12,7 @@ class Class(Base):
     school_id: Mapped[str] = mapped_column(ForeignKey("schools.id"))
     name: Mapped[str] = mapped_column(String(200))
     age_group: Mapped[str | None] = mapped_column(String(50))
+    period: Mapped[str | None] = mapped_column(String(20))  # turno: Manhã / Tarde / Noite
     schedule: Mapped[str | None] = mapped_column(String(200))
     coach_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
