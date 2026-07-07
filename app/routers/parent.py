@@ -10,24 +10,13 @@ from app.models.payment import Payment
 from app.models.evaluation import Evaluation
 from app.models.attendance import AttendanceSession, AttendanceRecord
 from app.models.match import Match, MatchStat
-from app.schemas.student import StudentOut
 from app.schemas.payment import PaymentOut
 from app.schemas.evaluation import EvaluationOut
 from app.schemas.attendance import AttendanceSessionOut
 from app.schemas.match import MatchOut
 from app.services import stats
-from app.services.parent_linking import reconcile_parent_links
 
 router = APIRouter(prefix="/parent", tags=["parent"])
-
-
-@router.get("/students", response_model=list[StudentOut])
-def my_students(db: Session = Depends(get_db), current_user: User = Depends(require_parent)):
-    # Reconcilia por email do responsável: pega filhos cadastrados após o login.
-    reconcile_parent_links(db, current_user)
-    links = db.query(ParentStudentLink).filter(ParentStudentLink.parent_id == current_user.id).all()
-    student_ids = [l.student_id for l in links]
-    return db.query(Student).filter(Student.id.in_(student_ids)).all()
 
 
 def _assert_linked(parent_id: str, student_id: str, db: Session):

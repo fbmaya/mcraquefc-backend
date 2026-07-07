@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, students, classes, payments, evaluations, matches, attendance, parent, platform, stats
+from app.routers import auth, classes, payments, evaluations, matches, attendance, parent, platform, stats
+from app.contexts.athletes.interface import students_router as students
+from app.contexts.athletes.interface import parent_router as athletes_parent
 
 app = FastAPI(title="Meu Craque FC API", version="1.0.0")
 
@@ -16,6 +18,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(students.router)
+app.include_router(athletes_parent.router)
 app.include_router(classes.router)
 app.include_router(payments.router)
 app.include_router(evaluations.router)
