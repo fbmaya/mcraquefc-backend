@@ -6,7 +6,10 @@ from app.database import Base
 
 
 class ParentStudentLink(Base):
-    """Links a parent (User with role=parent) to a student via access_code."""
+    """Links a parent (User with role=parent) to a student.
+
+    Criado por reconciliação: bate o guardian_email do aluno com o email do
+    responsável no login (ver app.services.parent_linking)."""
 
     __tablename__ = "parent_student_links"
 

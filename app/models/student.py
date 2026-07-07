@@ -16,9 +16,9 @@ class Student(Base):
     position: Mapped[str | None] = mapped_column(String(100))
     foot: Mapped[str | None] = mapped_column(String(20))
     guardian_name: Mapped[str | None] = mapped_column(String(200))
+    guardian_email: Mapped[str | None] = mapped_column(String(200), index=True)
     guardian_phone: Mapped[str | None] = mapped_column(String(50))
     notes: Mapped[str | None] = mapped_column(String(1000))
-    access_code: Mapped[str | None] = mapped_column(String(20), unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     school: Mapped["School"] = relationship(back_populates="students")

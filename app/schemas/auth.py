@@ -10,6 +10,11 @@ class RegisterRequest(BaseModel):
     school_id: str | None = None
 
 
+class GoogleLoginRequest(BaseModel):
+    # ID token (JWT) emitido pelo Google Identity Services no front.
+    credential: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

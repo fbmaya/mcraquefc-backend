@@ -72,9 +72,9 @@ parent, _ = get_or_create_user("pai@demo.com", "Responsável Demo", UserRole.par
 
 db.commit()
 
-# ── Demo dataset (idempotente via marcador de access_code) ────
-DEMO_MARKER = "DEMO0001"
-if db.query(Student).filter(Student.access_code == DEMO_MARKER).first():
+# ── Demo dataset (idempotente via guardian_email do 1º aluno) ─
+DEMO_MARKER_EMAIL = "pai@demo.com"
+if db.query(Student).filter(Student.guardian_email == DEMO_MARKER_EMAIL).first():
     print("[demo] dados de exemplo já existem")
     db.close()
     print("Done.")
@@ -89,26 +89,27 @@ turma_sub11 = Class(id=str(uuid.uuid4()), school_id=school.id, name="Sub-11 A",
                     age_group="Sub-11", schedule="Seg/Qua 19h", coach_id=coach.id)
 db.add_all([turma_sub9, turma_sub11])
 
-# Students (o primeiro leva o código-marcador e é vinculado ao pai)
+# Students. O 1º leva o guardian_email do pai demo — o vínculo é reconciliado
+# no login por esse email (mesmo fluxo de produção).
 students_spec = [
-    ("Lucas Gabriel", "Ponta", "Esquerdo", "Ana Martins", turma_sub9, DEMO_MARKER),
-    ("João Miguel", "Atacante", "Direito", "Carla Souza", turma_sub9, "DEMO0002"),
-    ("Pedro Henrique", "Meia", "Direito", "Marcos Alves", turma_sub11, "DEMO0003"),
-    ("Rafael Costa", "Zagueiro", "Direito", "Fernanda Costa", turma_sub11, "DEMO0004"),
-    ("Bruno Dias", "Goleiro", "Direito", "Paulo Dias", turma_sub9, "DEMO0005"),
+    ("Lucas Gabriel", "Ponta", "Esquerdo", "Ana Martins", turma_sub9, DEMO_MARKER_EMAIL),
+    ("João Miguel", "Atacante", "Direito", "Carla Souza", turma_sub9, None),
+    ("Pedro Henrique", "Meia", "Direito", "Marcos Alves", turma_sub11, None),
+    ("Rafael Costa", "Zagueiro", "Direito", "Fernanda Costa", turma_sub11, None),
+    ("Bruno Dias", "Goleiro", "Direito", "Paulo Dias", turma_sub9, None),
 ]
 students = []
-for name, pos, foot, guardian, turma, code in students_spec:
+for name, pos, foot, guardian, turma, guardian_email in students_spec:
     s = Student(id=str(uuid.uuid4()), school_id=school.id, name=name, position=pos,
-                foot=foot, guardian_name=guardian, guardian_phone="(11) 90000-0000",
-                access_code=code, birth_date=dt.date(2016, 3, 12))
+                foot=foot, guardian_name=guardian, guardian_email=guardian_email,
+                guardian_phone="(11) 90000-0000", birth_date=dt.date(2016, 3, 12))
     db.add(s)
     db.add(ClassEnrollment(id=str(uuid.uuid4()), class_id=turma.id, student_id=s.id, active=True))
     students.append(s)
 
 db.flush()
 
-# Vincula o pai ao primeiro aluno
+# Vincula o pai ao 1º aluno (o login também reconciliaria via guardian_email).
 db.add(ParentStudentLink(id=str(uuid.uuid4()), parent_id=parent.id, student_id=students[0].id))
 
 

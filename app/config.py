@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440
+    # OAuth client id do Google (login no painel). Opcional: sem ele, /auth/google responde 503.
+    google_client_id: str | None = None
     # Comma-separated list of allowed CORS origins
     cors_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:5500"
 

@@ -8,6 +8,7 @@ class StudentCreate(BaseModel):
     position: str | None = None
     foot: str | None = None
     guardian_name: str | None = None
+    guardian_email: str | None = None
     guardian_phone: str | None = None
     notes: str | None = None
 
@@ -18,6 +19,7 @@ class StudentUpdate(BaseModel):
     position: str | None = None
     foot: str | None = None
     guardian_name: str | None = None
+    guardian_email: str | None = None
     guardian_phone: str | None = None
     notes: str | None = None
     photo_url: str | None = None
@@ -32,9 +34,9 @@ class StudentOut(BaseModel):
     position: str | None
     foot: str | None
     guardian_name: str | None
+    guardian_email: str | None
     guardian_phone: str | None
     notes: str | None
-    access_code: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

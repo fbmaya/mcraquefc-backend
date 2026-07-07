@@ -1,6 +1,4 @@
 import uuid
-import random
-import string
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -20,8 +18,12 @@ def _school_id(user: User) -> str:
     return user.school_id
 
 
-def _generate_code() -> str:
-    return "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+def _normalize_guardian_email(data: dict) -> None:
+    """Normaliza o email do responsável (strip/lower) para casar no login do pai."""
+    email = data.get("guardian_email")
+    if email is not None:
+        email = email.strip().lower()
+        data["guardian_email"] = email or None
 
 
 # List/read: coach and manager can see students
@@ -34,10 +36,9 @@ def list_students(db: Session = Depends(get_db), current_user: User = Depends(re
 @router.post("/", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
 def create_student(body: StudentCreate, db: Session = Depends(get_db), current_user: User = Depends(require_manager)):
     licensing.assert_can_add_student(db, _school_id(current_user))
-    code = _generate_code()
-    while db.query(Student).filter(Student.access_code == code).first():
-        code = _generate_code()
-    student = Student(id=str(uuid.uuid4()), school_id=_school_id(current_user), access_code=code, **body.model_dump())
+    data = body.model_dump()
+    _normalize_guardian_email(data)
+    student = Student(id=str(uuid.uuid4()), school_id=_school_id(current_user), **data)
     db.add(student)
     db.commit()
     db.refresh(student)
@@ -63,7 +64,9 @@ def update_student(
     student = db.get(Student, student_id)
     if not student or student.school_id != _school_id(current_user):
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
-    for field, value in body.model_dump(exclude_none=True).items():
+    data = body.model_dump(exclude_none=True)
+    _normalize_guardian_email(data)
+    for field, value in data.items():
         setattr(student, field, value)
     db.commit()
     db.refresh(student)
@@ -78,18 +81,3 @@ def delete_student(student_id: str, db: Session = Depends(get_db), current_user:
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
     db.delete(student)
     db.commit()
-
-
-# Regenerate access code: manager only
-@router.post("/{student_id}/regenerate-code", response_model=StudentOut)
-def regenerate_code(student_id: str, db: Session = Depends(get_db), current_user: User = Depends(require_manager)):
-    student = db.get(Student, student_id)
-    if not student or student.school_id != _school_id(current_user):
-        raise HTTPException(status_code=404, detail="Aluno não encontrado")
-    code = _generate_code()
-    while db.query(Student).filter(Student.access_code == code).first():
-        code = _generate_code()
-    student.access_code = code
-    db.commit()
-    db.refresh(student)
-    return student

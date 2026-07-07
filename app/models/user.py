@@ -20,7 +20,9 @@ class User(Base):
     school_id: Mapped[str | None] = mapped_column(ForeignKey("schools.id"))
     name: Mapped[str] = mapped_column(String(200))
     email: Mapped[str] = mapped_column(String(200), unique=True, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(200))
+    # Nullable: usuários que entram só via Google não têm senha local.
+    hashed_password: Mapped[str | None] = mapped_column(String(200))
+    google_sub: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.parent)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
