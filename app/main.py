@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, classes, payments, evaluations, matches, attendance, parent, platform, stats
+from app.routers import auth, payments, evaluations, matches, attendance, parent, platform, stats
+from app.contexts.school.interface import classes_router as classes
 from app.contexts.athletes.interface import students_router as students
 from app.contexts.athletes.interface import parent_router as athletes_parent
 
