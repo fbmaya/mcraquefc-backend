@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.shared.domain.value_objects import Email
@@ -53,7 +54,6 @@ class SqlAlchemyStudentRepository(StudentRepository):
         return [_to_domain(r) for r in rows]
 
     def list_by_guardian_email(self, email: Email) -> list[Student]:
-        from sqlalchemy import func
         rows = (
             self.session.query(StudentORM)
             .filter(func.lower(StudentORM.guardian_email) == email.value)

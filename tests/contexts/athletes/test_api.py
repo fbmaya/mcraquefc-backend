@@ -47,3 +47,78 @@ def test_create_requires_email(client, db_session):
     h = _token(client)
     r = client.post("/students/", headers=h, json={"name": "SemEmail"})
     assert r.status_code == 422
+
+
+def test_patch_student_persists_changes(client, db_session):
+    """Regressão: UpdateStudent.execute mutava um objeto de domínio desanexado
+    (retornado por `get`, que já é `_to_domain(row)`) sem chamar `students.add`
+    antes do commit — a resposta do PATCH vinha certa, mas nada era persistido.
+    Este teste relê via uma requisição GET separada (nova leitura no banco)
+    para confirmar que a mudança realmente foi salva."""
+    _seed_manager(db_session)
+    h = _token(client)
+    created = client.post(
+        "/students/", headers=h,
+        json={"name": "Lucas", "guardian_email": "pai@t.com", "position": "Zagueiro"},
+    )
+    assert created.status_code == 201, created.text
+    student_id = created.json()["id"]
+
+    patched = client.patch(
+        "/students/" + student_id, headers=h,
+        json={"position": "Atacante", "guardian_email": "novo@t.com"},
+    )
+    assert patched.status_code == 200, patched.text
+    assert patched.json()["position"] == "Atacante"
+    assert patched.json()["guardian_email"] == "novo@t.com"
+
+    reread = client.get("/students/" + student_id, headers=h)
+    assert reread.status_code == 200, reread.text
+    assert reread.json()["position"] == "Atacante"
+    assert reread.json()["guardian_email"] == "novo@t.com"
+
+
+def test_delete_student(client, db_session):
+    _seed_manager(db_session)
+    h = _token(client)
+    created = client.post("/students/", headers=h, json={"name": "Lucas", "guardian_email": "pai@t.com"})
+    assert created.status_code == 201, created.text
+    student_id = created.json()["id"]
+
+    deleted = client.delete("/students/" + student_id, headers=h)
+    assert deleted.status_code == 204
+
+    reread = client.get("/students/" + student_id, headers=h)
+    assert reread.status_code == 404
+
+
+def test_get_student_nonexistent_id_returns_404(client, db_session):
+    _seed_manager(db_session)
+    h = _token(client)
+    r = client.get("/students/" + str(uuid.uuid4()), headers=h)
+    assert r.status_code == 404
+
+
+def test_parent_students_reconciles_by_guardian_email(client, db_session):
+    from app.models.user import User, UserRole
+    from app.auth.jwt import hash_password
+
+    school = _seed_manager(db_session)
+    manager_headers = _token(client)
+
+    created = client.post(
+        "/students/", headers=manager_headers,
+        json={"name": "Filho", "guardian_email": "mae@t.com"},
+    )
+    assert created.status_code == 201, created.text
+
+    db_session.add(User(
+        id=str(uuid.uuid4()), school_id=None, name="Mãe", email="mae@t.com",
+        hashed_password=hash_password("y"), role=UserRole.parent,
+    ))
+    db_session.commit()
+
+    parent_headers = _token(client, email="mae@t.com", pw="y")
+    r = client.get("/parent/students", headers=parent_headers)
+    assert r.status_code == 200, r.text
+    assert [s["name"] for s in r.json()] == ["Filho"]

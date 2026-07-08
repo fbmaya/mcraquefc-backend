@@ -46,6 +46,7 @@ class UpdateStudent:
         if "guardian_email" in changes and changes["guardian_email"] is not None:
             fields["guardian_email"] = Email.parse(changes["guardian_email"])
         student.change(**fields)
+        self.students.add(student)
         self.uow.commit()
         return StudentView.of(student)
 

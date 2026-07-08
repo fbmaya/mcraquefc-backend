@@ -1,4 +1,5 @@
 import pytest
+from app.shared.domain.errors import ValidationError
 from app.shared.domain.value_objects import Email
 from app.contexts.athletes.domain.student import Student, matches_guardian
 from app.contexts.athletes.domain.repositories import StudentRepository, ParentLinkRepository
@@ -51,7 +52,7 @@ def test_register_student_creates_and_commits():
 
 def test_register_rejects_invalid_email():
     students, uow = FakeStudents(), FakeUoW()
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         uc.RegisterStudent(students, uow).execute(
             school_id="sch1", data=NewStudent(name="X", guardian_email="naoehemail"))
 
