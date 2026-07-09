@@ -30,7 +30,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     # Block staff of an inactive school / suspended license on every request.
     # Imported here to avoid a circular import at module load.
-    from app.services import licensing
+    from app.contexts.platform.application import licensing
     licensing.assert_tenant_active(db, user)
 
     return user

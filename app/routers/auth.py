@@ -67,7 +67,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
             headers={"WWW-Authenticate": "Bearer"},
         )
     # refuse login early for staff of an inactive/suspended tenant
-    from app.services import licensing
+    from app.contexts.platform.application import licensing
     licensing.assert_tenant_active(db, user)
     reconcile_parent_links(db, user)
     return _token_response(user)
@@ -119,7 +119,7 @@ def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
         db.commit()
 
     # staff de escola inativa/licença suspensa é barrado (ignora parent/platform_admin)
-    from app.services import licensing
+    from app.contexts.platform.application import licensing
     licensing.assert_tenant_active(db, user)
     reconcile_parent_links(db, user)
     return _token_response(user)

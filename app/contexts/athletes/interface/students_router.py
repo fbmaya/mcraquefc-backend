@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.deps import require_manager, require_coach_or_manager
 from app.models.user import User
 from app.schemas.student import StudentCreate, StudentUpdate, StudentOut
-from app.services import licensing
+from app.contexts.platform.application import licensing
 from app.database import get_db
 from app.contexts.athletes.application.dtos import NewStudent
 from app.contexts.athletes.application import use_cases as uc
