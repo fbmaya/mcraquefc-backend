@@ -68,6 +68,16 @@ class SqlAlchemyMatchRepository(MatchRepository):
         )
         return [_to_domain(r) for r in rows]
 
+    def list_by_student(self, student_id: str) -> list[Match]:
+        rows = (
+            self.session.query(MatchORM)
+            .join(MatchStatORM, MatchORM.id == MatchStatORM.match_id)
+            .filter(MatchStatORM.student_id == student_id)
+            .order_by(MatchORM.date.desc())
+            .all()
+        )
+        return [_to_domain(r) for r in rows]
+
     def remove(self, match: Match) -> None:
         # delete children first — the ORM has no cascade and match_id is NOT NULL
         self.session.query(MatchStatORM).filter(MatchStatORM.match_id == match.id).delete()

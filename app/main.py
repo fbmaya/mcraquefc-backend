@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import parent
 from app.contexts.identity.interface import auth_router as auth
 from app.contexts.performance.interface import matches_router as matches
 from app.contexts.school.interface import classes_router as classes
@@ -32,7 +31,6 @@ app.include_router(payments.router)
 app.include_router(evaluations.router)
 app.include_router(matches.router)
 app.include_router(attendance.router)
-app.include_router(parent.router)
 app.include_router(platform.router)
 app.include_router(stats.router)
 

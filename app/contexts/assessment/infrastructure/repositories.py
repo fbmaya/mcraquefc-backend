@@ -44,6 +44,15 @@ class SqlAlchemyEvaluationRepository(EvaluationRepository):
             q = q.filter(EvaluationORM.student_id == student_id)
         return [_to_domain(r) for r in q.order_by(EvaluationORM.date.desc()).all()]
 
+    def list_by_student(self, student_id: str) -> list[Evaluation]:
+        rows = (
+            self.session.query(EvaluationORM)
+            .filter(EvaluationORM.student_id == student_id)
+            .order_by(EvaluationORM.date.desc())
+            .all()
+        )
+        return [_to_domain(r) for r in rows]
+
     def remove(self, evaluation: Evaluation) -> None:
         row = self.session.get(EvaluationORM, evaluation.id)
         if row:

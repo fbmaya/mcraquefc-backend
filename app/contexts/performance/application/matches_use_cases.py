@@ -63,6 +63,16 @@ class ListMatches:
         return [MatchView.of(m) for m in self.matches.list_by_school(school_id)]
 
 
+class ListMatchesForStudent:
+    """Portal do responsável: jogos de um aluno (sem escopo de escola)."""
+
+    def __init__(self, matches: MatchRepository):
+        self.matches = matches
+
+    def execute(self, *, student_id: str) -> list[MatchView]:
+        return [MatchView.of(m) for m in self.matches.list_by_student(student_id)]
+
+
 class DeleteMatch:
     def __init__(self, matches: MatchRepository, uow: UnitOfWork):
         self.matches, self.uow = matches, uow

@@ -38,6 +38,16 @@ class ListEvaluations:
         return [EvaluationView.of(e) for e in self.evaluations.list_by_school(school_id, student_id)]
 
 
+class ListEvaluationsForStudent:
+    """Portal do responsável: avaliações de um aluno (sem escopo de escola)."""
+
+    def __init__(self, evaluations: EvaluationRepository):
+        self.evaluations = evaluations
+
+    def execute(self, *, student_id: str) -> list[EvaluationView]:
+        return [EvaluationView.of(e) for e in self.evaluations.list_by_student(student_id)]
+
+
 class DeleteEvaluation:
     def __init__(self, evaluations: EvaluationRepository, uow: UnitOfWork):
         self.evaluations, self.uow = evaluations, uow

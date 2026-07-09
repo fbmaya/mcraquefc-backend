@@ -16,6 +16,10 @@ class FakeMatches(MatchRepository):
     def save(self, m): self.items[m.id] = m
     def get(self, mid): return self.items.get(mid)
     def list_by_school(self, school_id): return [m for m in self.items.values() if m.school_id == school_id]
+    def list_by_student(self, student_id):
+        return [m for m in self.items.values()
+                if any(st.student_id == student_id for st in m.stats)]
+
     def remove(self, m): self.items.pop(m.id, None)
     def next_id(self):
         self._m += 1

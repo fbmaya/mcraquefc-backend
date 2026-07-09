@@ -54,6 +54,16 @@ class ListPayments:
         return [PaymentView.of(p) for p in self.payments.list_by_school(school_id, month_key, student_id)]
 
 
+class ListPaymentsForStudent:
+    """Portal do responsável: pagamentos de um aluno (sem escopo de escola)."""
+
+    def __init__(self, payments: PaymentRepository):
+        self.payments = payments
+
+    def execute(self, *, student_id: str) -> list[PaymentView]:
+        return [PaymentView.of(p) for p in self.payments.list_by_student(student_id)]
+
+
 class UpdatePayment:
     def __init__(self, payments: PaymentRepository, uow: UnitOfWork):
         self.payments, self.uow = payments, uow

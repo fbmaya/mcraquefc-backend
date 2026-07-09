@@ -55,6 +55,15 @@ class SqlAlchemyPaymentRepository(PaymentRepository):
             q = q.filter(PaymentORM.student_id == student_id)
         return [_to_domain(r) for r in q.order_by(PaymentORM.month_key.desc()).all()]
 
+    def list_by_student(self, student_id: str) -> list[Payment]:
+        rows = (
+            self.session.query(PaymentORM)
+            .filter(PaymentORM.student_id == student_id)
+            .order_by(PaymentORM.month_key.desc())
+            .all()
+        )
+        return [_to_domain(r) for r in rows]
+
     def remove(self, payment: Payment) -> None:
         row = self.session.get(PaymentORM, payment.id)
         if row:

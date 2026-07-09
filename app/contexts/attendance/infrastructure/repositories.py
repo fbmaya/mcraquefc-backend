@@ -56,6 +56,16 @@ class SqlAlchemyAttendanceRepository(AttendanceRepository):
             q = q.filter(SessionORM.class_id == class_id)
         return [_to_domain(r) for r in q.order_by(SessionORM.date.desc()).all()]
 
+    def list_by_student(self, student_id: str) -> list[AttendanceSession]:
+        rows = (
+            self.session.query(SessionORM)
+            .join(RecordORM, SessionORM.id == RecordORM.session_id)
+            .filter(RecordORM.student_id == student_id)
+            .order_by(SessionORM.date.desc())
+            .all()
+        )
+        return [_to_domain(r) for r in rows]
+
     def remove(self, session: AttendanceSession) -> None:
         # delete children first — the ORM has no cascade and session_id is NOT NULL
         self.session.query(RecordORM).filter(RecordORM.session_id == session.id).delete()

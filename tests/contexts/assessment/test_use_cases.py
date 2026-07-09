@@ -21,6 +21,9 @@ class FakeEvaluations(EvaluationRepository):
             out = [e for e in out if e.student_id == student_id]
         return out
 
+    def list_by_student(self, student_id):
+        return [e for e in self.items.values() if e.student_id == student_id]
+
     def remove(self, e): self.items.pop(e.id, None)
     def student_belongs_to_school(self, student_id, school_id): return self.students.get(student_id) == school_id
 

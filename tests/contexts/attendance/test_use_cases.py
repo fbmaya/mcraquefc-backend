@@ -23,6 +23,10 @@ class FakeSessions(AttendanceRepository):
             out = [s for s in out if s.class_id == class_id]
         return out
 
+    def list_by_student(self, student_id):
+        return [s for s in self.items.values()
+                if any(r.student_id == student_id for r in s.records)]
+
     def remove(self, s): self.items.pop(s.id, None)
     def class_belongs_to_school(self, class_id, school_id): return self.classes.get(class_id) == school_id
     def students_all_in_school(self, student_ids, school_id):

@@ -24,6 +24,9 @@ class FakePayments(PaymentRepository):
             out = [p for p in out if p.student_id == student_id]
         return out
 
+    def list_by_student(self, student_id):
+        return [p for p in self.items.values() if p.student_id == student_id]
+
     def remove(self, p): self.items.pop(p.id, None)
     def student_belongs_to_school(self, student_id, school_id): return self.students.get(student_id) == school_id
     def exists_for_student_month(self, student_id, month_key):

@@ -52,6 +52,16 @@ class ListSessions:
         return [SessionView.of(s) for s in self.sessions.list_by_school(school_id, class_id)]
 
 
+class ListSessionsForStudent:
+    """Portal do responsável: presenças de um aluno (sem escopo de escola)."""
+
+    def __init__(self, sessions: AttendanceRepository):
+        self.sessions = sessions
+
+    def execute(self, *, student_id: str) -> list[SessionView]:
+        return [SessionView.of(s) for s in self.sessions.list_by_student(student_id)]
+
+
 class DeleteSession:
     def __init__(self, sessions: AttendanceRepository, uow: UnitOfWork):
         self.sessions, self.uow = sessions, uow
