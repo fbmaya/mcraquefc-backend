@@ -9,7 +9,7 @@ class ParentStudentLink(Base):
     """Links a parent (User with role=parent) to a student.
 
     Criado por reconciliação: bate o guardian_email do aluno com o email do
-    responsável no login (ver app.services.parent_linking)."""
+    responsável no login (ver app.contexts.identity — ReconcileParentLinks)."""
 
     __tablename__ = "parent_student_links"
 
