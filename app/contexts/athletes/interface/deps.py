@@ -2,7 +2,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.shared.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
+from app.shared.infrastructure.sqlalchemy_unit_of_work import SqlAlchemyUnitOfWork
 from app.contexts.athletes.infrastructure.repositories import (
     SqlAlchemyStudentRepository, SqlAlchemyParentLinkRepository,
 )

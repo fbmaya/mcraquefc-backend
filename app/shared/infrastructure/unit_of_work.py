@@ -1,21 +1,9 @@
 from typing import Protocol
 
-from sqlalchemy.orm import Session
-
 
 class UnitOfWork(Protocol):
+    """Porta pura (sem infra). A camada de aplicação depende só disto;
+    a implementação concreta vive em sqlalchemy_unit_of_work.py."""
+
     def commit(self) -> None: ...
     def rollback(self) -> None: ...
-
-
-class SqlAlchemyUnitOfWork:
-    """UoW fina sobre a Session request-scoped do FastAPI (Depends(get_db))."""
-
-    def __init__(self, session: Session) -> None:
-        self._session = session
-
-    def commit(self) -> None:
-        self._session.commit()
-
-    def rollback(self) -> None:
-        self._session.rollback()
