@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.auth.deps import get_current_user, require_parent
 from app.database import get_db
 from app.models.user import User
-from app.models.student import Student
 from app.models.parent_link import ParentStudentLink
 from app.models.payment import Payment
 from app.models.evaluation import Evaluation
@@ -14,7 +13,8 @@ from app.schemas.payment import PaymentOut
 from app.schemas.evaluation import EvaluationOut
 from app.schemas.attendance import AttendanceSessionOut
 from app.schemas.match import MatchOut
-from app.services import stats
+from app.contexts.reporting.application import queries as reporting
+from app.contexts.reporting.infrastructure.repositories import SqlAlchemyReportingRepository
 
 router = APIRouter(prefix="/parent", tags=["parent"])
 
@@ -32,11 +32,12 @@ def _assert_linked(parent_id: str, student_id: str, db: Session):
 @router.get("/students/{student_id}/summary")
 def student_summary(student_id: str, db: Session = Depends(get_db), current_user: User = Depends(require_parent)):
     _assert_linked(current_user.id, student_id, db)
-    student = db.get(Student, student_id)
-    if not student:
+    repo = SqlAlchemyReportingRepository(db)
+    try:
+        performance = reporting.StudentPerformance(repo).execute(student_id=student_id)
+        performance["peers"] = reporting.PeerAverages(repo).execute(student_id=student_id)
+    except reporting.StudentNotFound:
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
-    performance = stats.student_performance(db, student)
-    performance["peers"] = stats.peer_averages(db, student)
     return performance
 
 
