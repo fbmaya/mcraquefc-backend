@@ -52,9 +52,24 @@ def test_evaluations_desc_and_latest_axes(db_session):
     evs = repo.evaluations_desc(stu_id)
     assert [e.date for e in evs] == [dt.date(2026, 6, 1), dt.date(2026, 5, 1)]  # desc
     assert evs[0].overall is not None
-    # latest axes = 6 values (SUMMARY_AXES order), technique = (8+8+8)/3 = 8.0
-    axes = repo.latest_axes(stu_id)
-    assert len(axes) == 6 and axes[0] == 8.0
+    # latest axes (batch) = 1 aluno → 1 lista de 6 valores (ordem SUMMARY_AXES);
+    # pega a ÚLTIMA avaliação: technique = (8+8+8)/3 = 8.0
+    batch = repo.latest_axes_for({stu_id})
+    assert len(batch) == 1 and len(batch[0]) == 6 and batch[0][0] == 8.0
+
+
+def test_latest_axes_for_batch_skips_students_without_evals(db_session):
+    import uuid
+    from app.models.student import Student
+    school_id, stu_id = _seed(db_session)
+    # aluno da mesma escola, sem avaliação
+    noeval = Student(id=str(uuid.uuid4()), school_id=school_id, name="SemAval", guardian_email="x@t.com")
+    db_session.add(noeval)
+    db_session.commit()
+    repo = SqlAlchemyReportingRepository(db_session)
+    batch = repo.latest_axes_for({stu_id, noeval.id})
+    assert len(batch) == 1  # só o aluno com avaliação entra
+    assert repo.latest_axes_for(set()) == []
 
 
 def test_attendance_and_match_summary(db_session):

@@ -51,14 +51,25 @@ class SqlAlchemyReportingRepository(ReportingRepository):
         )
         return [EvalSnapshot(date=ev.date, overall=ev.overall, axes=_axes(ev)) for ev in rows]
 
-    def latest_axes(self, student_id: str) -> list[float | None] | None:
-        ev = (
+    def latest_axes_for(self, student_ids: set[str]) -> list[list[float | None]]:
+        ids = set(student_ids)
+        if not ids:
+            return []
+        # Uma query para todos os alunos; reduz para a última avaliação de cada um
+        # em Python (datasets por escola são pequenos). Evita o N+1 de 1 query/aluno.
+        rows = (
             self.session.query(Evaluation)
-            .filter(Evaluation.student_id == student_id)
-            .order_by(Evaluation.date.desc(), Evaluation.created_at.desc())
-            .first()
+            .filter(Evaluation.student_id.in_(ids))
+            .order_by(Evaluation.student_id, Evaluation.date.desc(), Evaluation.created_at.desc())
+            .all()
         )
-        return _axes(ev) if ev else None
+        seen: set[str] = set()
+        out: list[list[float | None]] = []
+        for ev in rows:
+            if ev.student_id not in seen:
+                seen.add(ev.student_id)
+                out.append(_axes(ev))
+        return out
 
     def attendance_summary(self, student_id: str) -> dict:
         total = (

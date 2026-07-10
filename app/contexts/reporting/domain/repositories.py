@@ -17,7 +17,8 @@ class ReportingRepository(ABC):
     @abstractmethod
     def evaluations_desc(self, student_id: str) -> list[EvalSnapshot]: ...
     @abstractmethod
-    def latest_axes(self, student_id: str) -> list[float | None] | None: ...
+    def latest_axes_for(self, student_ids: set[str]) -> list[list[float | None]]:
+        """Eixos da última avaliação de cada aluno que tem avaliação (1 query, evita N+1)."""
     @abstractmethod
     def attendance_summary(self, student_id: str) -> dict: ...
     @abstractmethod

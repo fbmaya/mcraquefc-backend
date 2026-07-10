@@ -19,7 +19,8 @@ class FakeReporting(ReportingRepository):
     def get_student(self, sid): return self.students.get(sid)
     def class_info(self, sid): return self.classes.get(sid, (None, None))
     def evaluations_desc(self, sid): return self.evals.get(sid, [])
-    def latest_axes(self, sid): return self.latest.get(sid)
+    def latest_axes_for(self, ids):
+        return [self.latest[sid] for sid in ids if self.latest.get(sid) is not None]
     def attendance_summary(self, sid): return {"sessions": 4, "present": 3, "absent": 1, "rate": 75.0}
     def match_summary(self, sid): return {"goals": 2, "assists": 1}
     def class_peer_ids(self, school_id, class_name): return self.class_ids

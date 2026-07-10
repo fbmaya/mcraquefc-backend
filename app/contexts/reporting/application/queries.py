@@ -75,8 +75,7 @@ class PeerAverages:
         category_ids = self.repo.category_peer_ids(ref.school_id, category) if category else set()
 
         def axes_for(ids: set) -> list:
-            rows = [a for a in (self.repo.latest_axes(sid) for sid in ids) if a is not None]
-            return _average_axes(rows)
+            return _average_axes(self.repo.latest_axes_for(ids))
 
         return {
             "axes": SUMMARY_AXES,
