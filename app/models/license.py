@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from sqlalchemy import String, DateTime, Date, Boolean, Integer, Enum, ForeignKey, func
+from sqlalchemy import String, DateTime, Date, Boolean, Integer, Float, Enum, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -28,6 +28,9 @@ class License(Base):
     status: Mapped[LicenseStatus] = mapped_column(Enum(LicenseStatus), default=LicenseStatus.active)
     max_students: Mapped[int] = mapped_column(Integer, default=30)
     max_coaches: Mapped[int] = mapped_column(Integer, default=2)
+    # Family incluso no plano School: responsáveis de alunos ativos têm acesso pago.
+    family_included: Mapped[bool] = mapped_column(Boolean, default=False)
+    family_price_per_student: Mapped[float | None] = mapped_column(Float)
     expires_at: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

@@ -21,6 +21,8 @@ def _to_domain(row: SchoolORM) -> School:
         lic = License(
             id=row.license.id, plan=row.license.plan, status=row.license.status,
             max_students=row.license.max_students, max_coaches=row.license.max_coaches,
+            family_included=row.license.family_included,
+            family_price_per_student=row.license.family_price_per_student,
             expires_at=row.license.expires_at, notes=row.license.notes,
         )
     return School(

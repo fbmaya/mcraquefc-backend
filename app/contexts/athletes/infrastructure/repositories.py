@@ -16,7 +16,8 @@ def _to_domain(row: StudentORM) -> Student:
         guardian_email=Email.try_parse(row.guardian_email),
         birth_date=row.birth_date, position=row.position, foot=row.foot,
         guardian_name=row.guardian_name, guardian_phone=row.guardian_phone,
-        notes=row.notes, photo_url=row.photo_url, created_at=row.created_at,
+        notes=row.notes, photo_url=row.photo_url, active=row.active,
+        created_at=row.created_at,
     )
 
 
@@ -31,6 +32,7 @@ def _apply(row: StudentORM, s: Student) -> None:
     row.guardian_phone = s.guardian_phone
     row.notes = s.notes
     row.photo_url = s.photo_url
+    row.active = s.active
 
 
 class SqlAlchemyStudentRepository(StudentRepository):

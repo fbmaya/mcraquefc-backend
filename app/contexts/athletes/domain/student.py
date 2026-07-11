@@ -20,6 +20,7 @@ class Student(AggregateRoot):
     guardian_phone: str | None = None
     notes: str | None = None
     photo_url: str | None = None
+    active: bool = True
     created_at: dt.datetime | None = None
 
     @classmethod

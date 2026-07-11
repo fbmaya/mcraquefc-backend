@@ -17,6 +17,8 @@ class License:
     status: LicenseStatus = LicenseStatus.active
     max_students: int = 30
     max_coaches: int = 2
+    family_included: bool = False
+    family_price_per_student: float | None = None
     expires_at: dt.date | None = None
     notes: str | None = None
 

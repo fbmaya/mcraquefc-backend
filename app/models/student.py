@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from sqlalchemy import String, DateTime, Date, Integer, Float, ForeignKey, func, JSON
+from sqlalchemy import String, DateTime, Date, Integer, Float, Boolean, ForeignKey, func, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -19,6 +19,8 @@ class Student(Base):
     guardian_email: Mapped[str | None] = mapped_column(String(200), index=True)
     guardian_phone: Mapped[str | None] = mapped_column(String(50))
     notes: Mapped[str | None] = mapped_column(String(1000))
+    # Aluno inativo não conta como "ativo" (indicadores + base de cobrança Family) — Family §12-13.
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     school: Mapped["School"] = relationship(back_populates="students")

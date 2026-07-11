@@ -20,6 +20,22 @@ def test_add_and_get_roundtrip(db_session):
     assert got is not None
     assert got.name == "Lucas"
     assert got.guardian_email == Email.parse("pai@t.com")
+    assert got.active is True  # aluno nasce ativo
+
+
+def test_active_flag_roundtrips(db_session):
+    repo = SqlAlchemyStudentRepository(db_session)
+    s = Student(id=repo.next_id(), school_id="sch1", name="Inativo",
+                guardian_email=Email.parse("p@t.com"), active=False)
+    repo.add(s)
+    db_session.commit()
+    from app.database import SessionLocal
+    fresh = SessionLocal()
+    try:
+        got = SqlAlchemyStudentRepository(fresh).get(s.id)
+        assert got.active is False
+    finally:
+        fresh.close()
 
 
 def test_list_by_school_and_by_email(db_session):

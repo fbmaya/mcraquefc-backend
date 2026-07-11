@@ -21,6 +21,28 @@ def test_add_school_persists_school_and_license(db_session):
         got = _repo(fresh).get_school(s.id)
         assert got is not None and got.name == "Escola X" and got.active is True
         assert got.license.plan == PlanType.trial and got.license.max_students == 30
+        # Family: default não incluso, sem preço
+        assert got.license.family_included is False
+        assert got.license.family_price_per_student is None
+    finally:
+        fresh.close()
+
+
+def test_license_family_fields_roundtrip(db_session):
+    repo = _repo(db_session)
+    s = School.open(id=repo.next_id(), name="X", license_id=repo.next_id())
+    repo.add_school(s)
+    db_session.commit()
+    # ativa Family incluso direto no ORM (a edição via caso de uso vem na Fatia D)
+    row = db_session.query(LicenseORM).filter(LicenseORM.school_id == s.id).one()
+    row.family_included = True
+    row.family_price_per_student = 15.0
+    db_session.commit()
+    fresh = SessionLocal()
+    try:
+        got = _repo(fresh).get_school(s.id)
+        assert got.license.family_included is True
+        assert got.license.family_price_per_student == 15.0
     finally:
         fresh.close()
 
