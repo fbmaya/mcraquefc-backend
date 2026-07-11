@@ -60,6 +60,29 @@ def test_update_missing_school_404(client, db_session):
     assert client.patch("/platform/schools/nope", headers=h, json={"name": "X"}).status_code == 404
 
 
+def test_license_family_fields_and_over_quota_alert(client, db_session):
+    import uuid
+    from app.models.student import Student
+    _admin(db_session)
+    h = _token(client)
+    sid = client.post("/platform/schools", headers=h, json={"name": "X"}).json()["id"]
+    # ativa Family incluso com cota de 1
+    lic = client.patch(f"/platform/schools/{sid}/license", headers=h,
+                       json={"family_included": True, "family_price_per_student": 15.0, "family_seats": 1})
+    assert lic.status_code == 200
+    assert lic.json()["family_included"] is True and lic.json()["family_seats"] == 1
+    # 1 aluno ativo → dentro da cota, sem alerta
+    db_session.add(Student(id=str(uuid.uuid4()), school_id=sid, name="A", guardian_email="a@t.com", active=True))
+    db_session.commit()
+    d = client.get(f"/platform/schools/{sid}", headers=h).json()
+    assert d["active_student_count"] == 1 and d["family_over_quota"] is False
+    # 2º aluno ativo → passou da cota → alerta (mas não bloqueia nada)
+    db_session.add(Student(id=str(uuid.uuid4()), school_id=sid, name="B", guardian_email="b@t.com", active=True))
+    db_session.commit()
+    d2 = client.get(f"/platform/schools/{sid}", headers=h).json()
+    assert d2["active_student_count"] == 2 and d2["family_over_quota"] is True
+
+
 def test_staff_create_list_delete(client, db_session):
     _admin(db_session)
     h = _token(client)

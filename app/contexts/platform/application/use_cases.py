@@ -8,7 +8,8 @@ from app.contexts.platform.domain.read_models import StaffMember
 from app.contexts.platform.application.dtos import SchoolView, LicenseView, SchoolDetailView
 
 _SCHOOL_SCALARS = ("name", "primary_color", "active")
-_LICENSE_SCALARS = ("plan", "status", "max_students", "max_coaches", "expires_at", "notes")
+_LICENSE_SCALARS = ("plan", "status", "max_students", "max_coaches", "expires_at", "notes",
+                    "family_included", "family_price_per_student", "family_seats")
 
 
 class SchoolNotFound(DomainError):
@@ -75,10 +76,17 @@ class GetSchoolDetail:
     def execute(self, *, school_id: str) -> SchoolDetailView:
         school = _require_school(self.repo, school_id)
         manager_count, coach_count, student_count = self.repo.school_counts(school_id)
+        active_students = self.repo.active_student_count(school_id)
+        lic = school.license
+        over_quota = bool(
+            lic and lic.family_included and lic.family_seats is not None
+            and active_students > lic.family_seats
+        )
         return SchoolDetailView(
             school=SchoolView.of(school),
             license=LicenseView.of(school.id, school.license),
             manager_count=manager_count, coach_count=coach_count, student_count=student_count,
+            active_student_count=active_students, family_over_quota=over_quota,
         )
 
 

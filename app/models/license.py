@@ -31,6 +31,8 @@ class License(Base):
     # Family incluso no plano School: responsáveis de alunos ativos têm acesso pago.
     family_included: Mapped[bool] = mapped_column(Boolean, default=False)
     family_price_per_student: Mapped[float | None] = mapped_column(Float)
+    # Cota contratada de Family (cap flexível: só alerta, não bloqueia). None = não rastreado.
+    family_seats: Mapped[int | None] = mapped_column(Integer)
     expires_at: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

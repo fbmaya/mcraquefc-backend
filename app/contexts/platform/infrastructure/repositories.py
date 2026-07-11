@@ -12,7 +12,8 @@ from app.contexts.platform.domain.read_models import StaffMember
 from app.contexts.platform.domain.repositories import PlatformRepository
 
 _SCHOOL_SCALARS = ("name", "primary_color", "active")
-_LICENSE_SCALARS = ("plan", "status", "max_students", "max_coaches", "expires_at", "notes")
+_LICENSE_SCALARS = ("plan", "status", "max_students", "max_coaches", "expires_at", "notes",
+                    "family_included", "family_price_per_student", "family_seats")
 
 
 def _to_domain(row: SchoolORM) -> School:
@@ -23,6 +24,7 @@ def _to_domain(row: SchoolORM) -> School:
             max_students=row.license.max_students, max_coaches=row.license.max_coaches,
             family_included=row.license.family_included,
             family_price_per_student=row.license.family_price_per_student,
+            family_seats=row.license.family_seats,
             expires_at=row.license.expires_at, notes=row.license.notes,
         )
     return School(
@@ -97,6 +99,12 @@ class SqlAlchemyPlatformRepository(PlatformRepository):
         return (
             self.session.query(func.count(UserORM.id))
             .filter(UserORM.school_id == school_id, UserORM.role == UserRole.coach).scalar()
+        ) or 0
+
+    def active_student_count(self, school_id: str) -> int:
+        return (
+            self.session.query(func.count(StudentORM.id))
+            .filter(StudentORM.school_id == school_id, StudentORM.active == True).scalar()  # noqa: E712
         ) or 0
 
     def platform_overview(self) -> dict:

@@ -12,6 +12,7 @@ from app.contexts.billing.interface import payments_router as payments
 from app.contexts.assessment.interface import evaluations_router as evaluations
 from app.contexts.reporting.interface import stats_router as stats
 from app.contexts.platform.interface import platform_router as platform
+from app.contexts.family.interface import admin_router as family_admin
 
 app = FastAPI(title="Meu Craque FC API", version="1.0.0")
 
@@ -32,6 +33,7 @@ app.include_router(evaluations.router)
 app.include_router(matches.router)
 app.include_router(attendance.router)
 app.include_router(platform.router)
+app.include_router(family_admin.router)
 app.include_router(stats.router)
 
 

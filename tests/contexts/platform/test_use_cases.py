@@ -13,6 +13,7 @@ class FakePlatform(PlatformRepository):
         self.staff: dict[str, StaffMember] = {}
         self.emails: set[str] = set()
         self.counts: dict[str, tuple] = {}      # school_id -> (mgr, coach, student)
+        self.active_students: dict[str, int] = {}
         self._n = 0
 
     def next_id(self):
@@ -26,6 +27,7 @@ class FakePlatform(PlatformRepository):
 
     def school_counts(self, sid): return self.counts.get(sid, (0, 0, 0))
     def coach_count(self, sid): return self.counts.get(sid, (0, 0, 0))[1]
+    def active_student_count(self, sid): return self.active_students.get(sid, 0)
     def platform_overview(self): return {"total_schools": len(self.schools)}
 
     def list_staff(self, sid): return [m for m in self.staff.values() if m.school_id == sid]
@@ -78,7 +80,38 @@ def test_school_detail_includes_counts():
     repo.counts[v.id] = (1, 2, 15)
     detail = uc.GetSchoolDetail(repo).execute(school_id=v.id)
     assert detail.manager_count == 1 and detail.coach_count == 2 and detail.student_count == 15
+    assert detail.active_student_count == 0 and detail.family_over_quota is False
     assert detail.license.plan == PlanType.trial
+
+
+def test_update_license_edits_family_fields():
+    repo, uow = FakePlatform(), FakeUoW()
+    v = _school(repo, uow)
+    lic = uc.UpdateLicense(repo, FakeUoW()).execute(
+        school_id=v.id, changes={"family_included": True, "family_price_per_student": 15.0, "family_seats": 100})
+    assert lic.family_included is True and lic.family_price_per_student == 15.0 and lic.family_seats == 100
+
+
+def test_school_detail_flags_over_quota():
+    repo, uow = FakePlatform(), FakeUoW()
+    v = _school(repo, uow)
+    uc.UpdateLicense(repo, FakeUoW()).execute(
+        school_id=v.id, changes={"family_included": True, "family_seats": 100})
+    repo.active_students[v.id] = 101  # passou da cota
+    detail = uc.GetSchoolDetail(repo).execute(school_id=v.id)
+    assert detail.active_student_count == 101 and detail.family_over_quota is True
+    # dentro da cota → sem alerta
+    repo.active_students[v.id] = 100
+    assert uc.GetSchoolDetail(repo).execute(school_id=v.id).family_over_quota is False
+
+
+def test_over_quota_false_when_seats_unset():
+    repo, uow = FakePlatform(), FakeUoW()
+    v = _school(repo, uow)
+    uc.UpdateLicense(repo, FakeUoW()).execute(school_id=v.id, changes={"family_included": True})
+    repo.active_students[v.id] = 9999
+    # sem family_seats definido → cap não rastreado → sem alerta
+    assert uc.GetSchoolDetail(repo).execute(school_id=v.id).family_over_quota is False
 
 
 def test_create_staff_rejects_duplicate_email():

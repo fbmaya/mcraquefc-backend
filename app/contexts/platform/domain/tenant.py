@@ -7,7 +7,8 @@ from app.shared.domain.errors import ValidationError
 from app.models.license import PlanType, LicenseStatus
 
 _SCHOOL_SCALARS = ("name", "primary_color", "active")
-_LICENSE_SCALARS = ("plan", "status", "max_students", "max_coaches", "expires_at", "notes")
+_LICENSE_SCALARS = ("plan", "status", "max_students", "max_coaches", "expires_at", "notes",
+                    "family_included", "family_price_per_student", "family_seats")
 
 
 @dataclass
@@ -19,6 +20,7 @@ class License:
     max_coaches: int = 2
     family_included: bool = False
     family_price_per_student: float | None = None
+    family_seats: int | None = None
     expires_at: dt.date | None = None
     notes: str | None = None
 

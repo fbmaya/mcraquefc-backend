@@ -44,6 +44,9 @@ class LicenseUpdate(BaseModel):
     status: LicenseStatus | None = None
     max_students: int | None = None
     max_coaches: int | None = None
+    family_included: bool | None = None
+    family_price_per_student: float | None = None
+    family_seats: int | None = None
     expires_at: date | None = None
     notes: str | None = None
 
@@ -55,6 +58,9 @@ class LicenseOut(BaseModel):
     status: LicenseStatus
     max_students: int
     max_coaches: int
+    family_included: bool
+    family_price_per_student: float | None
+    family_seats: int | None
     expires_at: date | None
     notes: str | None
 
@@ -67,6 +73,8 @@ class SchoolDetail(BaseModel):
     manager_count: int
     coach_count: int
     student_count: int
+    active_student_count: int
+    family_over_quota: bool
 
     model_config = {"from_attributes": True}
 

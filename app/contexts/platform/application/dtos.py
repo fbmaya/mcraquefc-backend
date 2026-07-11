@@ -25,6 +25,9 @@ class LicenseView:
     status: LicenseStatus
     max_students: int
     max_coaches: int
+    family_included: bool
+    family_price_per_student: float | None
+    family_seats: int | None
     expires_at: dt.date | None
     notes: str | None
 
@@ -35,6 +38,9 @@ class LicenseView:
         return cls(
             id=lic.id, school_id=school_id, plan=lic.plan, status=lic.status,
             max_students=lic.max_students, max_coaches=lic.max_coaches,
+            family_included=lic.family_included,
+            family_price_per_student=lic.family_price_per_student,
+            family_seats=lic.family_seats,
             expires_at=lic.expires_at, notes=lic.notes,
         )
 
@@ -46,3 +52,6 @@ class SchoolDetailView:
     manager_count: int
     coach_count: int
     student_count: int
+    active_student_count: int
+    # Cap flexível: passou da cota contratada de Family (só alerta, não bloqueia).
+    family_over_quota: bool
