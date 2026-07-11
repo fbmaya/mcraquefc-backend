@@ -21,10 +21,12 @@ def _token(client, email, pw):
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
-def _seed(db):
-    """Escola + gestor + aluno (guardian mae@t.com) com dados nos 4 contextos + responsável vinculado."""
+def _seed(db, family_included=True):
+    """Escola + gestor + aluno (guardian mae@t.com) com dados nos 4 contextos + responsável vinculado.
+    Cria licença com family_included (default True) p/ liberar o portal premium via Caminho 1."""
     from app.auth.jwt import hash_password
     from app.models.school import School
+    from app.models.license import License
     from app.models.user import User, UserRole
     from app.models.student import Student
     from app.models.class_ import Class
@@ -36,6 +38,8 @@ def _seed(db):
 
     school = School(id=str(uuid.uuid4()), name="E", primary_color="#000")
     db.add(school)
+    # Family incluso por padrão (Caminho 1) → portal premium liberado nos testes felizes.
+    db.add(License(id=str(uuid.uuid4()), school_id=school.id, family_included=family_included))
     db.add(User(id=str(uuid.uuid4()), school_id=school.id, name="G", email="g@t.com",
                 hashed_password=hash_password("x"), role=UserRole.manager))
     sid = str(uuid.uuid4())
@@ -59,11 +63,11 @@ def _seed(db):
     db.add(parent)
     db.add(ParentStudentLink(id=str(uuid.uuid4()), parent_id=parent.id, student_id=sid))
     db.commit()
-    return sid
+    return sid, school.id, parent.id
 
 
 def test_portal_reads_all_contexts(client, db_session):
-    sid = _seed(db_session)
+    sid, _, _ = _seed(db_session)
     h = _token(client, "mae@t.com", "y")
 
     assert [s["name"] for s in client.get("/parent/students", headers=h).json()] == ["Filho"]
@@ -105,3 +109,41 @@ def test_portal_requires_parent_role(client, db_session):
     _seed(db_session)
     h = _token(client, "g@t.com", "x")  # manager
     assert client.get("/parent/students", headers=h).status_code == 403
+
+
+PREMIUM = ("summary", "evaluations", "attendance", "matches")
+
+
+def test_premium_blocked_without_family(client, db_session):
+    # escola SEM Family incluso e sem assinatura → premium bloqueado; básico livre
+    sid, _, _ = _seed(db_session, family_included=False)
+    h = _token(client, "mae@t.com", "y")
+    for path in PREMIUM:
+        r = client.get(f"/parent/students/{sid}/{path}", headers=h)
+        assert r.status_code == 403, f"{path} -> {r.status_code}"
+        assert "Family" in r.json()["detail"]
+    # livres continuam acessíveis
+    assert client.get("/parent/students", headers=h).status_code == 200
+    assert client.get(f"/parent/students/{sid}/payments", headers=h).status_code == 200
+
+
+def test_premium_allowed_via_individual_subscription(client, db_session):
+    # sem Family incluso, mas com assinatura individual do responsável → premium liberado
+    import uuid as u
+    from app.models.family_subscription import FamilySubscription
+    sid, school_id, parent_id = _seed(db_session, family_included=False)
+    db_session.add(FamilySubscription(id=str(u.uuid4()), parent_id=parent_id, school_id=school_id))
+    db_session.commit()
+    h = _token(client, "mae@t.com", "y")
+    for path in PREMIUM:
+        assert client.get(f"/parent/students/{sid}/{path}", headers=h).status_code == 200, path
+
+
+def test_premium_blocked_when_student_inactive(client, db_session):
+    # Family incluso, mas aluno inativo → sem acesso premium (não conta como ativo)
+    from app.models.student import Student
+    sid, _, _ = _seed(db_session, family_included=True)
+    db_session.get(Student, sid).active = False
+    db_session.commit()
+    h = _token(client, "mae@t.com", "y")
+    assert client.get(f"/parent/students/{sid}/summary", headers=h).status_code == 403

@@ -1,9 +1,10 @@
 """Portal do responsável (/parent/*).
 
 O contexto Athletes é dono da relação responsável↔aluno, então hospeda o portal.
-Cada endpoint valida o vínculo (via link_repo) e compõe leituras dos outros
-contextos pelos respectivos casos de uso de leitura (sem escopo de escola —
-o vínculo já autoriza)."""
+Cada endpoint valida o vínculo (via link_repo). Os endpoints PREMIUM (evolução do
+atleta) exigem acesso Family — aplicado por require_family_access, que compõe os
+dois caminhos (pacote da escola OU assinatura individual). Já a lista de filhos e
+os pagamentos permanecem acessíveis sem Family."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -29,6 +30,8 @@ from app.contexts.performance.application import matches_use_cases as performanc
 from app.contexts.performance.interface import deps as performance_deps
 from app.contexts.reporting.application import queries as reporting
 from app.contexts.reporting.interface import deps as reporting_deps
+from app.contexts.family.application.access import CheckFamilyAccess
+from app.contexts.family.interface import deps as family_deps
 
 router = APIRouter(prefix="/parent", tags=["parent"])
 
@@ -38,24 +41,30 @@ def _assert_linked(links, parent_id: str, student_id: str) -> None:
         raise HTTPException(status_code=403, detail="Acesso negado a este aluno")
 
 
+def require_family_access(
+    student_id: str,
+    current_user: User = Depends(require_parent),
+    links=Depends(deps.link_repo),
+    subs=Depends(family_deps.subscription_repo),
+    reader=Depends(family_deps.access_reader),
+) -> User:
+    """Gate premium: vínculo + acesso Family (pacote da escola OU assinatura)."""
+    _assert_linked(links, current_user.id, student_id)
+    if not CheckFamilyAccess(subs, reader).execute(parent_id=current_user.id, student_id=student_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso Family inativo. Ative o Family para ver a evolução do atleta.",
+        )
+    return current_user
+
+
+# ── Livres (sem Family) ───────────────────────────────────────
+
 @router.get("/students", response_model=list[StudentOut])
 def my_students(students=Depends(deps.student_repo), links=Depends(deps.link_repo), uow=Depends(deps.uow),
                 current_user: User = Depends(require_parent)):
     return uc.ListChildrenForParent(students, links, uow).execute(
         parent_id=current_user.id, parent_email=current_user.email)
-
-
-@router.get("/students/{student_id}/summary")
-def student_summary(student_id: str, links=Depends(deps.link_repo),
-                    reporting_repo=Depends(reporting_deps.reporting_repo),
-                    current_user: User = Depends(require_parent)):
-    _assert_linked(links, current_user.id, student_id)
-    try:
-        performance_view = reporting.StudentPerformance(reporting_repo).execute(student_id=student_id)
-        performance_view["peers"] = reporting.PeerAverages(reporting_repo).execute(student_id=student_id)
-    except reporting.StudentNotFound:
-        raise HTTPException(status_code=404, detail="Aluno não encontrado")
-    return performance_view
 
 
 @router.get("/students/{student_id}/payments", response_model=list[PaymentOut])
@@ -66,25 +75,32 @@ def student_payments(student_id: str, links=Depends(deps.link_repo),
     return billing.ListPaymentsForStudent(payments).execute(student_id=student_id)
 
 
+# ── Premium (exigem Family) ───────────────────────────────────
+
+@router.get("/students/{student_id}/summary")
+def student_summary(student_id: str, reporting_repo=Depends(reporting_deps.reporting_repo),
+                    _: User = Depends(require_family_access)):
+    try:
+        performance_view = reporting.StudentPerformance(reporting_repo).execute(student_id=student_id)
+        performance_view["peers"] = reporting.PeerAverages(reporting_repo).execute(student_id=student_id)
+    except reporting.StudentNotFound:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    return performance_view
+
+
 @router.get("/students/{student_id}/evaluations", response_model=list[EvaluationOut])
-def student_evaluations(student_id: str, links=Depends(deps.link_repo),
-                        evaluations=Depends(assessment_deps.evaluation_repo),
-                        current_user: User = Depends(require_parent)):
-    _assert_linked(links, current_user.id, student_id)
+def student_evaluations(student_id: str, evaluations=Depends(assessment_deps.evaluation_repo),
+                        _: User = Depends(require_family_access)):
     return assessment.ListEvaluationsForStudent(evaluations).execute(student_id=student_id)
 
 
 @router.get("/students/{student_id}/attendance", response_model=list[AttendanceSessionOut])
-def student_attendance(student_id: str, links=Depends(deps.link_repo),
-                       sessions=Depends(attendance_deps.attendance_repo),
-                       current_user: User = Depends(require_parent)):
-    _assert_linked(links, current_user.id, student_id)
+def student_attendance(student_id: str, sessions=Depends(attendance_deps.attendance_repo),
+                       _: User = Depends(require_family_access)):
     return attendance.ListSessionsForStudent(sessions).execute(student_id=student_id)
 
 
 @router.get("/students/{student_id}/matches", response_model=list[MatchOut])
-def student_matches(student_id: str, links=Depends(deps.link_repo),
-                    matches=Depends(performance_deps.match_repo),
-                    current_user: User = Depends(require_parent)):
-    _assert_linked(links, current_user.id, student_id)
+def student_matches(student_id: str, matches=Depends(performance_deps.match_repo),
+                    _: User = Depends(require_family_access)):
     return performance.ListMatchesForStudent(matches).execute(student_id=student_id)

@@ -68,10 +68,13 @@ def test_student_stats_unknown_404(client, db_session):
 def test_parent_summary_uses_reporting(client, db_session):
     """O /parent/.../summary (router antigo) agora compõe via contexto Reporting."""
     from app.models.school import School
+    from app.models.license import License
     from app.models.user import User, UserRole
     from app.auth.jwt import hash_password
     school = School(id=str(uuid.uuid4()), name="E", primary_color="#000")
     db_session.add(school)
+    # summary é premium: escola com Family incluso libera o portal
+    db_session.add(License(id=str(uuid.uuid4()), school_id=school.id, family_included=True))
     db_session.add(User(id=str(uuid.uuid4()), school_id=school.id, name="Gestor", email="m@t.com",
                         hashed_password=hash_password("x"), role=UserRole.manager))
     db_session.commit()
