@@ -8,6 +8,7 @@ from app.models.evaluation import Evaluation
 from app.models.attendance import AttendanceSession, AttendanceRecord
 from app.models.match import Match, MatchStat
 from app.models.parent_link import ParentStudentLink
+from app.models.family_subscription import FamilySubscription, FamilySubStatus, FamilyPriceTier
 
 __all__ = [
     "School",
@@ -27,4 +28,7 @@ __all__ = [
     "Match",
     "MatchStat",
     "ParentStudentLink",
+    "FamilySubscription",
+    "FamilySubStatus",
+    "FamilyPriceTier",
 ]
