@@ -51,8 +51,9 @@ def require_family_access(
     """Gate premium: vínculo + acesso Family (pacote da escola OU assinatura)."""
     _assert_linked(links, current_user.id, student_id)
     if not CheckFamilyAccess(subs, reader).execute(parent_id=current_user.id, student_id=student_id):
+        # 402 Payment Required: distingue "precisa de Family" de "não é seu filho" (403).
         raise HTTPException(
-            status_code=403,
+            status_code=402,
             detail="Acesso Family inativo. Ative o Family para ver a evolução do atleta.",
         )
     return current_user

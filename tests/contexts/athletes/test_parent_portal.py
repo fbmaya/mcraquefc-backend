@@ -120,7 +120,7 @@ def test_premium_blocked_without_family(client, db_session):
     h = _token(client, "mae@t.com", "y")
     for path in PREMIUM:
         r = client.get(f"/parent/students/{sid}/{path}", headers=h)
-        assert r.status_code == 403, f"{path} -> {r.status_code}"
+        assert r.status_code == 402, f"{path} -> {r.status_code}"  # Payment Required
         assert "Family" in r.json()["detail"]
     # livres continuam acessíveis
     assert client.get("/parent/students", headers=h).status_code == 200
@@ -146,4 +146,4 @@ def test_premium_blocked_when_student_inactive(client, db_session):
     db_session.get(Student, sid).active = False
     db_session.commit()
     h = _token(client, "mae@t.com", "y")
-    assert client.get(f"/parent/students/{sid}/summary", headers=h).status_code == 403
+    assert client.get(f"/parent/students/{sid}/summary", headers=h).status_code == 402
