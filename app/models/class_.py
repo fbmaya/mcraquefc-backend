@@ -9,7 +9,7 @@ class Class(Base):
     __tablename__ = "classes"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    school_id: Mapped[str] = mapped_column(ForeignKey("schools.id"))
+    school_id: Mapped[str] = mapped_column(ForeignKey("schools.id"), index=True)
     name: Mapped[str] = mapped_column(String(200))
     age_group: Mapped[str | None] = mapped_column(String(50))
     period: Mapped[str | None] = mapped_column(String(20))  # turno: Manhã / Tarde / Noite
@@ -32,8 +32,8 @@ class ClassEnrollment(Base):
     __tablename__ = "class_enrollments"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    class_id: Mapped[str] = mapped_column(ForeignKey("classes.id"))
-    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"))
+    class_id: Mapped[str] = mapped_column(ForeignKey("classes.id"), index=True)
+    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"), index=True)
     enrolled_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     active: Mapped[bool] = mapped_column(default=True)
 

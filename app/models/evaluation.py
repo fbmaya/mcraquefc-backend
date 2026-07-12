@@ -17,7 +17,7 @@ class Evaluation(Base):
     __tablename__ = "evaluations"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"))
+    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"), index=True)
     evaluated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     date: Mapped[date] = mapped_column(Date)
 

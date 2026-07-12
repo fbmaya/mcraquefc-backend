@@ -9,7 +9,7 @@ class Student(Base):
     __tablename__ = "students"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    school_id: Mapped[str] = mapped_column(ForeignKey("schools.id"))
+    school_id: Mapped[str] = mapped_column(ForeignKey("schools.id"), index=True)
     name: Mapped[str] = mapped_column(String(200), index=True)
     birth_date: Mapped[date | None] = mapped_column(Date)
     photo_url: Mapped[str | None] = mapped_column(String(500))

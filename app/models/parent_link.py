@@ -14,8 +14,8 @@ class ParentStudentLink(Base):
     __tablename__ = "parent_student_links"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    parent_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
-    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"))
+    parent_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"), index=True)
     linked_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     parent: Mapped["User"] = relationship(back_populates="parent_links")

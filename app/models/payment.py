@@ -17,7 +17,7 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"))
+    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"), index=True)
     month_key: Mapped[str] = mapped_column(String(7))  # YYYY-MM
     amount: Mapped[float] = mapped_column(Float, default=0.0)
     status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus), default=PaymentStatus.pending)

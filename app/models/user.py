@@ -17,7 +17,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    school_id: Mapped[str | None] = mapped_column(ForeignKey("schools.id"))
+    school_id: Mapped[str | None] = mapped_column(ForeignKey("schools.id"), index=True)
     name: Mapped[str] = mapped_column(String(200))
     email: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     # Nullable: usuários que entram só via Google não têm senha local.

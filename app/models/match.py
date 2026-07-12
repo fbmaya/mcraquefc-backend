@@ -9,7 +9,7 @@ class Match(Base):
     __tablename__ = "matches"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    school_id: Mapped[str] = mapped_column(ForeignKey("schools.id"))
+    school_id: Mapped[str] = mapped_column(ForeignKey("schools.id"), index=True)
     date: Mapped[date] = mapped_column(Date, index=True)
     opponent: Mapped[str] = mapped_column(String(200))
     location: Mapped[str | None] = mapped_column(String(300))
@@ -28,8 +28,8 @@ class MatchStat(Base):
     __tablename__ = "match_stats"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    match_id: Mapped[str] = mapped_column(ForeignKey("matches.id"))
-    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"))
+    match_id: Mapped[str] = mapped_column(ForeignKey("matches.id"), index=True)
+    student_id: Mapped[str] = mapped_column(ForeignKey("students.id"), index=True)
     goals: Mapped[int] = mapped_column(Integer, default=0)
     assists: Mapped[int] = mapped_column(Integer, default=0)
     yellow_cards: Mapped[int] = mapped_column(Integer, default=0)
