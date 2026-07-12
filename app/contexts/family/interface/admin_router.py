@@ -4,7 +4,8 @@ O pacote da escola (Caminho 1) é gerido via License no /platform (family_includ
 Aqui ficam só as assinaturas individuais, quando a escola não inclui Family."""
 import datetime as dt
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.auth.deps import require_platform_admin
@@ -19,7 +20,8 @@ router = APIRouter(prefix="/platform", tags=["platform-family"])
 
 
 class SubscriptionCreate(BaseModel):
-    parent_id: str
+    # O admin identifica o responsável pelo e-mail (parents não são escopados por escola).
+    parent_email: EmailStr
     price_tier: FamilyPriceTier = FamilyPriceTier.cheio
     current_period: dt.date | None = None
     expires_at: dt.date | None = None
@@ -50,12 +52,17 @@ def create_subscription(school_id: str, body: SubscriptionCreate, db: Session = 
                         _: User = Depends(require_platform_admin)):
     if db.get(School, school_id) is None:
         raise HTTPException(status_code=404, detail="Escolinha não encontrada")
-    parent = db.get(User, body.parent_id)
-    if parent is None or parent.role != UserRole.parent:
+    parent = (
+        db.query(User)
+        .filter(func.lower(User.email) == body.parent_email.strip().lower(),
+                User.role == UserRole.parent)
+        .first()
+    )
+    if parent is None:
         raise HTTPException(status_code=404, detail="Responsável não encontrado")
     try:
         return uc.CreateSubscription(subs, uow).execute(
-            parent_id=body.parent_id, school_id=school_id, price_tier=body.price_tier,
+            parent_id=parent.id, school_id=school_id, price_tier=body.price_tier,
             current_period=body.current_period, expires_at=body.expires_at)
     except uc.SubscriptionAlreadyExists:
         raise HTTPException(status_code=409, detail="Já existe assinatura Family para este responsável nesta escola")
