@@ -99,6 +99,26 @@ def test_get_student_nonexistent_id_returns_404(client, db_session):
     assert r.status_code == 404
 
 
+def test_set_student_active_toggle(client, db_session):
+    _seed_manager(db_session)
+    h = _token(client)
+    created = client.post("/students/", headers=h, json={"name": "Lucas", "guardian_email": "pai@t.com"})
+    sid = created.json()["id"]
+    assert created.json()["active"] is True
+    off = client.patch(f"/students/{sid}/active", headers=h, json={"active": False})
+    assert off.status_code == 200 and off.json()["active"] is False
+    # persistiu
+    assert client.get(f"/students/{sid}", headers=h).json()["active"] is False
+    on = client.patch(f"/students/{sid}/active", headers=h, json={"active": True})
+    assert on.json()["active"] is True
+
+
+def test_set_student_active_missing_404(client, db_session):
+    _seed_manager(db_session)
+    h = _token(client)
+    assert client.patch(f"/students/{uuid.uuid4()}/active", headers=h, json={"active": False}).status_code == 404
+
+
 def test_parent_students_reconciles_by_guardian_email(client, db_session):
     from app.models.user import User, UserRole
     from app.auth.jwt import hash_password

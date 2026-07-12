@@ -80,6 +80,16 @@ def test_update_student_changes_email():
     assert out.guardian_email == "novo@t.com"
 
 
+def test_set_student_active_toggles_and_scoped():
+    students, uow = FakeStudents(), FakeUoW()
+    v = uc.RegisterStudent(students, uow).execute(school_id="sch1", data=NewStudent(name="A", guardian_email="a@t.com"))
+    assert v.active is True  # nasce ativo
+    out = uc.SetStudentActive(students, uow).execute(school_id="sch1", student_id=v.id, active=False)
+    assert out.active is False and students.get(v.id).active is False
+    with pytest.raises(uc.StudentNotFound):  # escopo de escola
+        uc.SetStudentActive(students, uow).execute(school_id="OUTRA", student_id=v.id, active=True)
+
+
 def test_list_children_reconciles_by_email():
     students, links, uow = FakeStudents(), FakeLinks(), FakeUoW()
     reg = uc.RegisterStudent(students, uow)

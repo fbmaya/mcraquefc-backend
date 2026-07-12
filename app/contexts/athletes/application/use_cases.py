@@ -51,6 +51,18 @@ class UpdateStudent:
         return StudentView.of(student)
 
 
+class SetStudentActive:
+    def __init__(self, students: StudentRepository, uow: UnitOfWork):
+        self.students, self.uow = students, uow
+
+    def execute(self, *, school_id: str, student_id: str, active: bool) -> StudentView:
+        student = _require(self.students, school_id, student_id)
+        student.set_active(active)
+        self.students.add(student)
+        self.uow.commit()
+        return StudentView.of(student)
+
+
 class GetStudent:
     def __init__(self, students: StudentRepository):
         self.students = students

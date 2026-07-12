@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.auth.deps import require_manager, require_coach_or_manager
 from app.models.user import User
-from app.schemas.student import StudentCreate, StudentUpdate, StudentOut
+from app.schemas.student import StudentCreate, StudentUpdate, StudentActiveUpdate, StudentOut
 from app.contexts.platform.application import licensing
 from app.database import get_db
 from app.contexts.athletes.application.dtos import NewStudent
@@ -46,6 +46,16 @@ def update_student(student_id: str, body: StudentUpdate, students=Depends(deps.s
     try:
         return uc.UpdateStudent(students, uow).execute(
             school_id=_school_id(current_user), student_id=student_id, changes=body.model_dump(exclude_unset=True))
+    except uc.StudentNotFound:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+
+
+@router.patch("/{student_id}/active", response_model=StudentOut)
+def set_student_active(student_id: str, body: StudentActiveUpdate, students=Depends(deps.student_repo),
+                       uow=Depends(deps.uow), current_user: User = Depends(require_manager)):
+    try:
+        return uc.SetStudentActive(students, uow).execute(
+            school_id=_school_id(current_user), student_id=student_id, active=body.active)
     except uc.StudentNotFound:
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
 

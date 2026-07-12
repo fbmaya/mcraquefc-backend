@@ -29,6 +29,7 @@ class StudentView:
     guardian_email: str | None
     guardian_phone: str | None
     notes: str | None
+    active: bool
     created_at: dt.datetime | None
 
     @classmethod
@@ -38,5 +39,6 @@ class StudentView:
             photo_url=s.photo_url, position=s.position, foot=s.foot,
             guardian_name=s.guardian_name,
             guardian_email=s.guardian_email.value if s.guardian_email else None,
-            guardian_phone=s.guardian_phone, notes=s.notes, created_at=s.created_at,
+            guardian_phone=s.guardian_phone, notes=s.notes, active=s.active,
+            created_at=s.created_at,
         )

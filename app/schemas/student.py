@@ -26,6 +26,10 @@ class StudentUpdate(BaseModel):
     photo_url: str | None = None
 
 
+class StudentActiveUpdate(BaseModel):
+    active: bool
+
+
 class StudentOut(BaseModel):
     id: str
     school_id: str
@@ -38,6 +42,7 @@ class StudentOut(BaseModel):
     guardian_email: str | None
     guardian_phone: str | None
     notes: str | None
+    active: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}

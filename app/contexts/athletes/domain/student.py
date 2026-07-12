@@ -39,6 +39,9 @@ class Student(AggregateRoot):
             if key in ("name", "guardian_email", *_OPTIONAL):
                 setattr(self, key, value)
 
+    def set_active(self, value: bool) -> None:
+        self.active = value
+
 
 def matches_guardian(student: Student, email: Email) -> bool:
     return student.guardian_email is not None and student.guardian_email == email
