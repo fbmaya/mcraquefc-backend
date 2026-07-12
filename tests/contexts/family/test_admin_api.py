@@ -42,9 +42,11 @@ def test_create_list_cancel_subscription(client, db_session):
     assert r.status_code == 201, r.text
     sub_id = r.json()["id"]
     assert r.json()["status"] == "active" and r.json()["price_tier"] == "promo"
+    assert r.json()["parent_email"] == parent_email  # resposta enriquecida
     # lista
     lst = client.get(f"/platform/schools/{school_id}/family-subscriptions", headers=h)
     assert [s["id"] for s in lst.json()] == [sub_id]
+    assert lst.json()[0]["parent_email"] == parent_email
     # duplicado → 409 (e-mail case-insensitive)
     dup = client.post(f"/platform/schools/{school_id}/family-subscriptions", headers=h,
                       json={"parent_email": parent_email.upper()})

@@ -30,19 +30,31 @@ class SubscriptionCreate(BaseModel):
 class SubscriptionOut(BaseModel):
     id: str
     parent_id: str
+    parent_email: str | None
+    parent_name: str | None
     school_id: str
     status: FamilySubStatus
     price_tier: FamilyPriceTier
     current_period: dt.date | None
     expires_at: dt.date | None
 
-    model_config = {"from_attributes": True}
+
+def _out(view, db: Session) -> SubscriptionOut:
+    """Enriquece a view com e-mail/nome do responsável (parents não vêm do domínio Family)."""
+    u = db.get(User, view.parent_id)
+    return SubscriptionOut(
+        id=view.id, parent_id=view.parent_id,
+        parent_email=u.email if u else None, parent_name=u.name if u else None,
+        school_id=view.school_id, status=view.status, price_tier=view.price_tier,
+        current_period=view.current_period, expires_at=view.expires_at,
+    )
 
 
 @router.get("/schools/{school_id}/family-subscriptions", response_model=list[SubscriptionOut])
-def list_subscriptions(school_id: str, subs=Depends(deps.subscription_repo),
+def list_subscriptions(school_id: str, db: Session = Depends(get_db),
+                       subs=Depends(deps.subscription_repo),
                        _: User = Depends(require_platform_admin)):
-    return uc.ListSubscriptions(subs).execute(school_id=school_id)
+    return [_out(v, db) for v in uc.ListSubscriptions(subs).execute(school_id=school_id)]
 
 
 @router.post("/schools/{school_id}/family-subscriptions", response_model=SubscriptionOut,
@@ -61,17 +73,20 @@ def create_subscription(school_id: str, body: SubscriptionCreate, db: Session = 
     if parent is None:
         raise HTTPException(status_code=404, detail="Responsável não encontrado")
     try:
-        return uc.CreateSubscription(subs, uow).execute(
+        view = uc.CreateSubscription(subs, uow).execute(
             parent_id=parent.id, school_id=school_id, price_tier=body.price_tier,
             current_period=body.current_period, expires_at=body.expires_at)
     except uc.SubscriptionAlreadyExists:
         raise HTTPException(status_code=409, detail="Já existe assinatura Family para este responsável nesta escola")
+    return _out(view, db)
 
 
 @router.delete("/family-subscriptions/{subscription_id}", response_model=SubscriptionOut)
-def cancel_subscription(subscription_id: str, subs=Depends(deps.subscription_repo),
+def cancel_subscription(subscription_id: str, db: Session = Depends(get_db),
+                        subs=Depends(deps.subscription_repo),
                         uow=Depends(deps.uow), _: User = Depends(require_platform_admin)):
     try:
-        return uc.CancelSubscription(subs, uow).execute(subscription_id=subscription_id)
+        view = uc.CancelSubscription(subs, uow).execute(subscription_id=subscription_id)
     except uc.SubscriptionNotFound:
         raise HTTPException(status_code=404, detail="Assinatura não encontrada")
+    return _out(view, db)
