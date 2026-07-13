@@ -43,6 +43,7 @@ class StudentOut(BaseModel):
     guardian_phone: str | None
     notes: str | None
     active: bool
+    school_name: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

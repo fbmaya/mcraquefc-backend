@@ -70,7 +70,9 @@ def test_portal_reads_all_contexts(client, db_session):
     sid, _, _ = _seed(db_session)
     h = _token(client, "mae@t.com", "y")
 
-    assert [s["name"] for s in client.get("/parent/students", headers=h).json()] == ["Filho"]
+    children = client.get("/parent/students", headers=h).json()
+    assert [s["name"] for s in children] == ["Filho"]
+    assert children[0]["school_name"] == "E"  # escola do filho exposta ao responsável
 
     summary = client.get(f"/parent/students/{sid}/summary", headers=h)
     assert summary.status_code == 200

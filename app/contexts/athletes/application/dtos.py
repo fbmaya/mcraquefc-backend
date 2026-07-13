@@ -31,6 +31,8 @@ class StudentView:
     notes: str | None
     active: bool
     created_at: dt.datetime | None
+    # Preenchido só no portal do responsável (filhos podem estar em escolas diferentes).
+    school_name: str | None = None
 
     @classmethod
     def of(cls, s: Student) -> "StudentView":

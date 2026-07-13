@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth.deps import require_parent
 from app.database import get_db
 from app.models.user import User
+from app.models.school import School
 from app.schemas.student import StudentOut
 from app.schemas.payment import PaymentOut
 from app.schemas.evaluation import EvaluationOut
@@ -63,9 +64,17 @@ def require_family_access(
 
 @router.get("/students", response_model=list[StudentOut])
 def my_students(students=Depends(deps.student_repo), links=Depends(deps.link_repo), uow=Depends(deps.uow),
-                current_user: User = Depends(require_parent)):
-    return uc.ListChildrenForParent(students, links, uow).execute(
+                db: Session = Depends(get_db), current_user: User = Depends(require_parent)):
+    views = uc.ListChildrenForParent(students, links, uow).execute(
         parent_id=current_user.id, parent_email=current_user.email)
+    # enriquece com o nome da escola (filhos podem estar em escolas diferentes)
+    names: dict[str, str | None] = {}
+    for v in views:
+        if v.school_id not in names:
+            s = db.get(School, v.school_id)
+            names[v.school_id] = s.name if s else None
+        v.school_name = names[v.school_id]
+    return views
 
 
 @router.get("/students/{student_id}/payments", response_model=list[PaymentOut])
