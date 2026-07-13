@@ -22,6 +22,7 @@ class TokenResponse(BaseModel):
     name: str
     role: UserRole
     school_id: str | None
+    school_name: str | None = None
 
 
 class UserOut(BaseModel):

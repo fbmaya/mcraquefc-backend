@@ -7,6 +7,7 @@ from app.auth.deps import get_current_user
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
+from app.models.school import School
 from app.schemas.auth import GoogleLoginRequest, RegisterRequest, TokenResponse, UserOut
 from app.contexts.identity.application import use_cases as uc
 from app.contexts.identity.application.dtos import UserView
@@ -17,11 +18,18 @@ from app.contexts.platform.application import licensing
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _token_response(view: UserView) -> TokenResponse:
+def _school_name(db: Session, school_id: str | None) -> str | None:
+    if not school_id:
+        return None
+    school = db.get(School, school_id)
+    return school.name if school else None
+
+
+def _token_response(view: UserView, school_name: str | None = None) -> TokenResponse:
     token = create_access_token({"sub": view.id, "role": view.role, "school_id": view.school_id})
     return TokenResponse(
         access_token=token, user_id=view.id, name=view.name,
-        role=view.role, school_id=view.school_id,
+        role=view.role, school_id=view.school_id, school_name=school_name,
     )
 
 
@@ -55,7 +63,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     # barra login de staff de tenant inativo/suspenso antes de reconciliar
     licensing.assert_tenant_active(db, view)
     uc.ReconcileParentLinks(links, uow).execute(user_id=view.id, email=view.email, role=view.role)
-    return _token_response(view)
+    return _token_response(view, _school_name(db, view.school_id))
 
 
 @router.post("/google", response_model=TokenResponse)
@@ -86,7 +94,7 @@ def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db),
 
     licensing.assert_tenant_active(db, view)
     uc.ReconcileParentLinks(links, uow).execute(user_id=view.id, email=view.email, role=view.role)
-    return _token_response(view)
+    return _token_response(view, _school_name(db, view.school_id))
 
 
 @router.get("/me", response_model=UserOut)

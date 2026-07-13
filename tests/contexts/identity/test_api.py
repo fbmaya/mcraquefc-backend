@@ -38,8 +38,24 @@ def test_login_success_and_wrong_password(client, db_session):
     client.post("/auth/register", json={"name": "A", "email": "a@t.com", "password": "secret"})
     ok = client.post("/auth/token", data={"username": "a@t.com", "password": "secret"})
     assert ok.status_code == 200 and ok.json()["access_token"]
+    assert ok.json()["school_name"] is None  # responsável não é de uma escola
     bad = client.post("/auth/token", data={"username": "a@t.com", "password": "nope"})
     assert bad.status_code == 401
+
+
+def test_login_staff_includes_school_name(client, db_session):
+    import uuid
+    from app.models.school import School
+    from app.models.user import User, UserRole
+    from app.auth.jwt import hash_password
+    school = School(id=str(uuid.uuid4()), name="Escolinha do Zé", primary_color="#000")
+    db_session.add(school)
+    db_session.add(User(id=str(uuid.uuid4()), school_id=school.id, name="Gestor", email="g@t.com",
+                        hashed_password=hash_password("x"), role=UserRole.manager))
+    db_session.commit()
+    r = client.post("/auth/token", data={"username": "g@t.com", "password": "x"})
+    assert r.status_code == 200
+    assert r.json()["school_id"] == school.id and r.json()["school_name"] == "Escolinha do Zé"
 
 
 def test_register_reconciles_parent_links(client, db_session):
